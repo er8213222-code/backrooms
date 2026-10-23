@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>minimini.exe</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: linear-gradient(
+        rgba(0,0,0,.45),
+        rgba(0,0,0,.7)
+      ), url("fondo.jpg") center / cover no-repeat fixed;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .contenido {
+      width: 95%;
+      padding: 25px 10px;
+    }
+
+    h1 {
+      font-size: clamp(28px, 7vw, 65px);
+      text-shadow: 0 0 20px #ff003c;
+    }
+
+    #contador {
+      font-size: clamp(40px, 11vw, 100px);
+      font-weight: bold;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 25px #ff003c;
+      margin: 30px 0;
+    }
+
+    p {
+      color: #ddd;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="contenido">
+    <h1>minimini.exe ya está aqui</h1>
+    <div id="contador">00:00:00</div>
+    <p>23 de octubre de 2026 — 8:30 PM</p>
+    <p>Hora de Ciudad de México</p>
+  </main>
+
+  <script>
+    // 8:30 PM del 23 de octubre de 2026
+    // Ciudad de México (UTC-6)
+    const final = new Date(
+      "2026-10-23T20:30:00-06:00"
+    ).getTime();
+
+    const contador = document.getElementById("contador");
+
+    function actualizar() {
+      const restante = Math.max(
+        0, final - Date.now()
+      );
+
+      const horas = Math.floor(restante / 3600000);
+      const minutos = Math.floor(
+        (restante % 3600000) / 60000
+      );
+      const segundos = Math.floor(
+        (restante % 60000) / 1000
+      );
+
+      const formato = n => String(n).padStart(2, "0");
+
+      contador.textContent =
+        `${formato(horas)}:${formato(minutos)}:${formato(segundos)}`;
+
+      if (restante === 0) {
+        clearInterval(intervalo);
+        contador.textContent = "00:00:00";
+      }
+    }
+
+    actualizar();
+    const intervalo = setInterval(actualizar, 250);
+  </script>
+
+</body>
+</html>
