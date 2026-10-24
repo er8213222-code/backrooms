@@ -2,97 +2,194 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>minimini.exe</title>
-  <style>
-    * { box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>minimini.exe</title>
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      min-height: 100dvh;
-      background: linear-gradient(
-        rgba(0,0,0,.45),
-        rgba(0,0,0,.7)
-      ), url("fondo.jpg") center / cover no-repeat fixed;
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
-    .contenido {
-      width: 95%;
-      padding: 25px 10px;
-    }
+<style>
+* { box-sizing: border-box; }
 
-    h1 {
-      font-size: clamp(28px, 7vw, 65px);
-      text-shadow: 0 0 20px #ff003c;
-    }
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #000;
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+}
 
-    #contador {
-      font-size: clamp(40px, 11vw, 100px);
-      font-weight: bold;
-      font-variant-numeric: tabular-nums;
-      text-shadow: 0 0 25px #ff003c;
-      margin: 30px 0;
-    }
+.fondo {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: url("fondo.jpg") center / cover no-repeat;
+  image-rendering: pixelated;
+  filter: brightness(.55) contrast(1.3);
+}
 
-    p {
-      color: #ddd;
-      font-size: 16px;
-    }
-  </style>
+.scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0,0,0,.3) 4px
+  );
+}
+
+.contenido {
+  width: 95%;
+  padding: 20px;
+}
+
+h1 {
+  font-size: clamp(16px, 4vw, 35px);
+  line-height: 1.8;
+  color: #ff3344;
+  text-shadow: 3px 3px #600000;
+  margin-bottom: 35px;
+}
+
+#contador {
+  font-size: clamp(22px, 7vw, 70px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.6;
+  text-shadow: 4px 4px #8b0000, 0 0 20px red;
+}
+
+#mensajeFinal {
+  display: none;
+  font-size: clamp(17px, 4vw, 45px);
+  line-height: 2;
+  color: white;
+  text-shadow: 4px 4px red;
+  animation: glitch .4s infinite;
+}
+
+#activar, #reproducir {
+  margin-top: 35px;
+  padding: 16px;
+  background: #170000;
+  color: white;
+  border: 3px solid #ff3344;
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+#reproducir { display: none; }
+
+@keyframes glitch {
+  0%,100% { transform: translate(0); }
+  25% { transform: translate(-3px,2px); }
+  50% { transform: translate(3px,-2px); }
+  75% { transform: translate(-2px,1px); }
+}
+</style>
 </head>
+
 <body>
 
-  <main class="contenido">
-    <h1>minimini.exe ya está aqui</h1>
+<div class="fondo"></div>
+<div class="scanlines"></div>
+
+<main class="contenido">
+  <div id="espera">
+    <h1>PRÓXIMAMENTE</h1>
     <div id="contador">00:00:00</div>
-    <p>23 de octubre de 2026 — 8:30 PM</p>
-    <p>Hora de Ciudad de México</p>
-  </main>
+    <button id="activar">ACTIVAR SONIDO 🔊</button>
+  </div>
 
-  <script>
-    // 8:30 PM del 23 de octubre de 2026
-    // Ciudad de México (UTC-6)
-    const final = new Date(
-      "2026-10-23T20:30:00-06:00"
-    ).getTime();
+  <div id="mensajeFinal">
+    mini mini.exe está aquí
+  </div>
 
-    const contador = document.getElementById("contador");
+  <button id="reproducir">REPRODUCIR AUDIO 🔊</button>
+</main>
 
-    function actualizar() {
-      const restante = Math.max(
-        0, final - Date.now()
-      );
+<audio id="audioFinal" preload="auto" src="final.mp3"></audio>
 
-      const horas = Math.floor(restante / 3600000);
-      const minutos = Math.floor(
-        (restante % 3600000) / 60000
-      );
-      const segundos = Math.floor(
-        (restante % 60000) / 1000
-      );
+<script>
+const final = new Date(
+  "2026-10-23T20:30:00-06:00"
+).getTime();
 
-      const formato = n => String(n).padStart(2, "0");
+const espera = document.getElementById("espera");
+const mensaje = document.getElementById("mensajeFinal");
+const contador = document.getElementById("contador");
+const audio = document.getElementById("audioFinal");
+const activar = document.getElementById("activar");
+const reproducir = document.getElementById("reproducir");
 
-      contador.textContent =
-        `${formato(horas)}:${formato(minutos)}:${formato(segundos)}`;
+let sonidoActivado = false;
+let terminado = false;
 
-      if (restante === 0) {
-        clearInterval(intervalo);
-        contador.textContent = "00:00:00";
+// El usuario autoriza el audio tocando el botón.
+activar.addEventListener("click", async () => {
+  try {
+    audio.muted = true;
+    await audio.play();
+    audio.pause();
+    audio.currentTime = 0;
+    audio.muted = false;
+  } catch (e) {
+    audio.muted = false;
+  }
+
+  sonidoActivado = true;
+  activar.textContent = "SONIDO ACTIVADO ✓";
+});
+
+reproducir.addEventListener("click", () => {
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
+});
+
+function actualizar() {
+  const restante = final - Date.now();
+
+  if (restante <= 0) {
+    if (!terminado) {
+      terminado = true;
+      espera.style.display = "none";
+      mensaje.style.display = "block";
+      reproducir.style.display = "inline-block";
+
+      // Intentar reproducir al llegar a cero.
+      if (sonidoActivado) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
       }
     }
+    return;
+  }
 
-    actualizar();
-    const intervalo = setInterval(actualizar, 250);
-  </script>
+  const horas = Math.floor(restante / 3600000);
+  const minutos = Math.floor(
+    (restante % 3600000) / 60000
+  );
+  const segundos = Math.floor(
+    (restante % 60000) / 1000
+  );
+
+  contador.textContent = [horas,minutos,segundos]
+    .map(n => String(n).padStart(2,"0"))
+    .join(":");
+}
+
+actualizar();
+setInterval(actualizar, 250);
+</script>
 
 </body>
 </html>
